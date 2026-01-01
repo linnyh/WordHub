@@ -30,10 +30,10 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
 
-    // Update controller text if apiKey changes externally (though unlikely here)
-    if (_controller.text != appState.apiKey) {
-      _controller.text = appState.apiKey;
-    }
+    // Only update text from appState if the user hasn't edited it,
+    // OR if the appState changed externally (not via our own save).
+    // But since we want manual save, let's keep it simple: 
+    // load initial value in initState, and don't overwrite user input unless explicit.
 
     return Center(
       child: Container(
@@ -61,30 +61,47 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             SizedBox(height: 10),
-            TextField(
-              controller: _controller,
-              style: TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.grey[900],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[800]!),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.grey[900],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[800]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[800]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: const Color(0xFFFF9900)),
+                      ),
+                      hintText: 'Enter your API Key',
+                      hintStyle: TextStyle(color: Colors.grey),
+                    ),
+                  ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[800]!),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    appState.setApiKey(_controller.text);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('API Key saved successfully')),
+                    );
+                  },
+                  child: Text('Save', style: TextStyle(color: Colors.black)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF9900),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  ),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: const Color(0xFFFF9900)),
-                ),
-                hintText: 'Enter your API Key',
-                hintStyle: TextStyle(color: Colors.grey),
-              ),
-              onChanged: (value) {
-                appState.setApiKey(value);
-              },
+              ],
             ),
             SizedBox(height: 10),
             Text(
