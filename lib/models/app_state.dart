@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -13,13 +14,15 @@ class MyAppState extends ChangeNotifier {
   var history = <WordPair>[];
   static const maxHistoryLength = 8;
   var favoritePairs = <WordPair>[];
-  var apiKey = 'sk-pALkes2xizTUZ9q9gFcEDaqXjpm2z4yfjjUsoD1Fv0dK7aiV';
+  var apiKey = '';
   
   Map<String, dynamic> currentInfo = {};
   bool isLoading = false;
   final FlutterTts flutterTts = FlutterTts();
+  Timer? _debounce;
 
   MyAppState() {
+    _loadConfig();
     _loadFavorites();
     _loadCache().then((_) {
       fetchInfo(current);
@@ -183,6 +186,36 @@ Example:
     _saveCache();
   }
 
+  Future<File> get _configFile async {
+    final path = await _localPath;
+    return File('$path/config.json');
+  }
+
+  Future<void> _loadConfig() async {
+    try {
+      final file = await _configFile;
+      if (await file.exists()) {
+        final contents = await file.readAsString();
+        final json = jsonDecode(contents);
+        if (json['apiKey'] != null) {
+          apiKey = json['apiKey'];
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading config: $e');
+    }
+  }
+
+  Future<void> _saveConfig() async {
+    try {
+      final file = await _configFile;
+      await file.writeAsString(jsonEncode({'apiKey': apiKey}));
+    } catch (e) {
+      debugPrint('Error saving config: $e');
+    }
+  }
+
   Future<void> clearFavorites() async {
     try {
       final file = await _localFile;
@@ -211,6 +244,7 @@ Example:
 
   void setApiKey(String key) {
     apiKey = key;
+    _saveConfig();
     notifyListeners();
   }
 
