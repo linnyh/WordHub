@@ -4,6 +4,14 @@ WordHub is a creative word discovery and learning application built with Flutter
 
 The application features a unique and bold UI design inspired by the Pornhub aesthetic, characterized by a dark theme with high-contrast orange accents.
 
+## Screenshots
+
+<div style="display: flex; gap: 10px;">
+  <img src="screenshots/home.png" alt="Home Screen" width="300" />
+  <img src="screenshots/favorites.png" alt="Favorites Screen" width="300" />
+  <img src="screenshots/detail.png" alt="Detail Dialog" width="300" />
+</div>
+
 ## Features
 
 *   **Random Word Generation**: Discover new and interesting word combinations.
