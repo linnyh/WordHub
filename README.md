@@ -1,5 +1,9 @@
 # WordHub
 
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)
+![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/dart-%230175C2.svg?style=for-the-badge&logo=dart&logoColor=white)
+
 WordHub is a creative word discovery and learning application built with Flutter. It generates random English word pairs and uses AI to provide detailed profiles for them, including definitions, origins, and usage examples.
 
 The application features a unique and bold UI design inspired by the Pornhub aesthetic, characterized by a dark theme with high-contrast orange accents.
@@ -11,7 +15,6 @@ The application features a unique and bold UI design inspired by the Pornhub aes
   <img src="screenshots/favorites.png" alt="Favorites Screen" width="300" />
   <img src="screenshots/detail.png" alt="Detail Dialog" width="300" />
   <img src="screenshots/setting.png" alt="Settings Screen" width="300" />
-</div> src="screenshots/setting.png" alt="Settings" width="300" />
 </div>
 
 ## Features
@@ -24,11 +27,17 @@ The application features a unique and bold UI design inspired by the Pornhub aes
     *   Bilingual example sentences.
 *   **Text-to-Speech (TTS)**: Pronounce word pairs with a single click.
 *   **Favorites Management**: Save your favorite words and view detailed statistics.
+*   **Search Functionality**: Quickly find saved words with prefix matching.
 *   **History Tracking**: Easily revisit recently generated words.
 *   **Local Caching**: Caches AI responses locally to reduce API usage and improve performance.
 *   **Responsive Design**: Optimized layout for both desktop and mobile views.
 
 ## Tech Stack
+
+![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/dart-%230175C2.svg?style=for-the-badge&logo=dart&logoColor=white)
+![Provider](https://img.shields.io/badge/State_Management-Provider-blue?style=for-the-badge)
+![Moonshot](https://img.shields.io/badge/AI-Moonshot-purple?style=for-the-badge)
 
 *   **Framework**: [Flutter](https://flutter.dev/) (Dart)
 *   **State Management**: [Provider](https://pub.dev/packages/provider)
@@ -71,3 +80,9 @@ This project was developed entirely within **[Trae IDE](https://www.trae.ai/)** 
     ```
 
 *Note: You will need a valid Moonshot API key to use the AI generation features. Enter it in the Settings page.*
+
+## License
+
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)
+
+This project is licensed under the MIT License - see the LICENSE file for details.
