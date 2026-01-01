@@ -9,6 +9,8 @@ WordHub is a creative word discovery and learning application built with Flutter
 
 The application features a unique and bold UI design inspired by the Pornhub aesthetic, characterized by a dark theme with high-contrast orange accents.
 
+> **P.S.** This is just a toy project created for fun and learning purposes. 🧸
+
 ## Screenshots
 
 <div style="display: flex; gap: 10px;">
