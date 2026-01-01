@@ -3,6 +3,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)
 ![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/dart-%230175C2.svg?style=for-the-badge&logo=dart&logoColor=white)
+![Trae IDE](https://img.shields.io/badge/IDE-Trae-blueviolet?style=for-the-badge)
 
 WordHub is a creative word discovery and learning application built with Flutter. It generates random English word pairs and uses AI to provide detailed profiles for them, including definitions, origins, and usage examples.
 
@@ -38,6 +39,7 @@ The application features a unique and bold UI design inspired by the Pornhub aes
 ![Dart](https://img.shields.io/badge/dart-%230175C2.svg?style=for-the-badge&logo=dart&logoColor=white)
 ![Provider](https://img.shields.io/badge/State_Management-Provider-blue?style=for-the-badge)
 ![Moonshot](https://img.shields.io/badge/AI-Moonshot-purple?style=for-the-badge)
+![Trae IDE](https://img.shields.io/badge/IDE-Trae-blueviolet?style=for-the-badge)
 
 *   **Framework**: [Flutter](https://flutter.dev/) (Dart)
 *   **State Management**: [Provider](https://pub.dev/packages/provider)
