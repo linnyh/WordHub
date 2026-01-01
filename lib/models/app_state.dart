@@ -1,0 +1,244 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:english_words/english_words.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:path_provider/path_provider.dart';
+
+import '../services/moonshot_service.dart';
+
+class MyAppState extends ChangeNotifier {
+  var current = WordPair.random();
+  var history = <WordPair>[];
+  static const maxHistoryLength = 8;
+  var favoritePairs = <WordPair>[];
+  var apiKey = 'sk-pALkes2xizTUZ9q9gFcEDaqXjpm2z4yfjjUsoD1Fv0dK7aiV';
+  
+  Map<String, dynamic> currentInfo = {};
+  bool isLoading = false;
+  final FlutterTts flutterTts = FlutterTts();
+
+  MyAppState() {
+    _loadFavorites();
+    _loadCache().then((_) {
+      fetchInfo(current);
+    });
+    _initTts();
+  }
+
+  Future<void> _initTts() async {
+    await flutterTts.setLanguage("en-US");
+    await flutterTts.setSpeechRate(0.5);
+    await flutterTts.setVolume(1.0);
+    await flutterTts.setPitch(1.0);
+  }
+
+  Future<void> speak(String text) async {
+    await flutterTts.speak(text);
+  }
+
+  Future<void> fetchInfo(WordPair pair) async {
+    isLoading = true;
+    currentInfo = {};
+    notifyListeners();
+
+    final cached = getCachedData(pair);
+    if (cached != null) {
+      currentInfo = cached;
+      isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    final service = MoonshotService(apiKey: apiKey);
+
+    try {
+      final prompt = '''
+Generate a creative profile for the fictional brand name "${pair.asPascalCase}" (composed of "${pair.first}" and "${pair.second}").
+Return ONLY a valid JSON object with these keys:
+- "part_of_speech": The most suitable part of speech (e.g., Noun, Verb, Adjective).
+- "definition_en": A creative English definition (max 20 words).
+- "definition_cn": The Chinese translation of the definition.
+- "origin_en": A short, creative fictional origin story or etymology (max 30 words).
+- "origin_cn": The Chinese translation of the origin.
+- "sentences": An array of exactly 3 objects, each with "en" (English sentence) and "cn" (Chinese translation).
+
+Example:
+{
+  "part_of_speech": "Noun",
+  "definition_en": "A smart tool for...",
+  "definition_cn": "一种智能工具...",
+  "origin_en": "Derived from ancient myths...",
+  "origin_cn": "源于古老的神话...",
+  "sentences": [
+    {"en": "I used it.", "cn": "我用了它。"},
+    {"en": "It is great.", "cn": "它很棒。"},
+    {"en": "Buy it now.", "cn": "现在购买。"}
+  ]
+}
+''';
+
+      final response = await service.chat(messages: [
+        {'role': 'user', 'content': prompt}
+      ]);
+
+      final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(response);
+      if (jsonMatch == null) {
+        throw Exception('No JSON object found in response');
+      }
+      
+      final cleanJson = jsonMatch.group(0)!;
+      final data = jsonDecode(cleanJson);
+      
+      cacheData(pair, data);
+      currentInfo = data;
+      isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error fetching info: $e');
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    return File('$path/favorites.json');
+  }
+
+  Future<void> _loadFavorites() async {
+    try {
+      final file = await _localFile;
+      if (!await file.exists()) {
+        return;
+      }
+
+      final contents = await file.readAsString();
+      final List<dynamic> jsonList = jsonDecode(contents);
+
+      favoritePairs = jsonList.map((item) {
+        final List<dynamic> pair = item;
+        return WordPair(pair[0].toString(), pair[1].toString());
+      }).toList();
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading favorites: $e');
+    }
+  }
+
+  Future<void> _saveFavorites() async {
+    try {
+      final file = await _localFile;
+      final jsonList = favoritePairs.map((pair) => [pair.first, pair.second]).toList();
+      await file.writeAsString(jsonEncode(jsonList));
+    } catch (e) {
+      debugPrint('Error saving favorites: $e');
+    }
+  }
+
+  Future<File> get _cacheFile async {
+    final path = await _localPath;
+    return File('$path/word_cache.json');
+  }
+
+  // Cache structure: Map<String, Map<String, dynamic>>
+  // Key: "WordPair" (PascalCase)
+  // Value: JSON data from AI
+  Map<String, dynamic> _wordCache = {};
+
+  Future<void> _loadCache() async {
+    try {
+      final file = await _cacheFile;
+      if (await file.exists()) {
+        final contents = await file.readAsString();
+        _wordCache = jsonDecode(contents);
+      }
+    } catch (e) {
+      debugPrint('Error loading word cache: $e');
+    }
+  }
+
+  Future<void> _saveCache() async {
+    try {
+      final file = await _cacheFile;
+      await file.writeAsString(jsonEncode(_wordCache));
+    } catch (e) {
+      debugPrint('Error saving word cache: $e');
+    }
+  }
+
+  Map<String, dynamic>? getCachedData(WordPair pair) {
+    return _wordCache[pair.asPascalCase];
+  }
+
+  void cacheData(WordPair pair, Map<String, dynamic> data) {
+    _wordCache[pair.asPascalCase] = data;
+    _saveCache();
+  }
+
+  Future<void> clearFavorites() async {
+    try {
+      final file = await _localFile;
+      if (await file.exists()) {
+        await file.delete();
+      }
+      favoritePairs.clear();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error clearing favorites: $e');
+    }
+  }
+
+  Future<void> clearCache() async {
+    try {
+      final file = await _cacheFile;
+      if (await file.exists()) {
+        await file.delete();
+      }
+      _wordCache.clear();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error clearing cache: $e');
+    }
+  }
+
+  void setApiKey(String key) {
+    apiKey = key;
+    notifyListeners();
+  }
+
+  void setCurrent(WordPair pair) {
+    current = pair;
+    fetchInfo(current);
+    notifyListeners();
+  }
+
+  void getNext() {
+    if (!history.contains(current)) {
+      history.insert(0, current);
+    }
+    if (history.length > maxHistoryLength) {
+      history.removeLast();
+    }
+    current = WordPair.random();
+    fetchInfo(current);
+    notifyListeners();
+  }
+
+  void toggleFavorite(WordPair pair) {
+    if (favoritePairs.contains(pair)) {
+      favoritePairs.remove(pair);
+    } else {
+      favoritePairs.add(pair);
+    }
+    notifyListeners();
+    _saveFavorites();
+  }
+}
