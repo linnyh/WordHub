@@ -13,9 +13,11 @@ class BigCard extends StatefulWidget {
   const BigCard({
     super.key,
     required this.pair,
+    required this.style,
   });
 
   final WordPair pair;
+  final String style;
 
   @override
   State<BigCard> createState() => _BigCardState();
@@ -72,7 +74,7 @@ class _BigCardState extends State<BigCard> {
   @override
   void didUpdateWidget(BigCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.pair != oldWidget.pair) {
+    if (widget.pair != oldWidget.pair || widget.style != oldWidget.style) {
       _fetchInfo();
       if (_isSpeaking) {
         flutterTts.stop();
@@ -89,6 +91,23 @@ class _BigCardState extends State<BigCard> {
     
     final appState = Provider.of<MyAppState>(context, listen: false);
     
+    // Use widget.style instead of cached style if possible, or force fetch
+    // But getCachedData uses appState.currentStyle inside AppState...
+    // We should probably rely on cacheData with explicit key or just rely on appState being updated.
+    
+    // Since we update appState.currentStyle in the dialog, appState.currentStyle should be correct.
+    // BUT, we want to be explicit.
+    
+    // Let's just use the logic we had, but trigger on style change.
+    // Note: appState.getCachedData uses appState.currentStyle.
+    // If we passed 'style' param, we expect that style to be used.
+    
+    // Ideally AppState should have getCachedData(pair, style).
+    // But for now let's assume appState.currentStyle is updated by parent.
+    // However, if we want to support viewing a style WITHOUT changing global state, we would need to pass style to getCachedData.
+    
+    // The user said "add these style choices...". Changing global style is fine.
+    
     final cachedData = appState.getCachedData(widget.pair);
     if (cachedData != null) {
       if (mounted) {
@@ -103,8 +122,11 @@ class _BigCardState extends State<BigCard> {
     final service = MoonshotService(apiKey: appState.apiKey);
 
     try {
+      final styleInstruction = MyAppState.stylePrompts[widget.style] ?? MyAppState.stylePrompts['General']!;
       final prompt = '''
 Generate a creative profile for the fictional brand name "${widget.pair.asPascalCase}" (composed of "${widget.pair.first}" and "${widget.pair.second}").
+Context/Theme: $styleInstruction
+
 Return ONLY a valid JSON object with these keys:
 - "part_of_speech": The most suitable part of speech (e.g., Noun, Verb, Adjective).
 - "definition_en": A creative English definition (max 20 words).

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../models/app_state.dart';
 import 'favorites_page.dart';
 import 'generator_page.dart';
 import 'settings_page.dart';
+import 'ph_logo_page.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -12,11 +15,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var selectedIndex = 0;
   var isNavigationRailExtended = false;
 
   @override
   Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+    var selectedIndex = appState.selectedIndex;
+    
     Widget page;
     switch (selectedIndex) {
       case 0:
@@ -26,6 +31,9 @@ class _MyHomePageState extends State<MyHomePage> {
         page = FavoritesPage();
         break;
       case 2:
+        page = PhLogoPage();
+        break;
+      case 3:
         page = SettingsPage();
         break;
       default:
@@ -39,13 +47,20 @@ class _MyHomePageState extends State<MyHomePage> {
             child: NavigationRail(
               extended: isNavigationRailExtended,
               minWidth: 72,
-              leading: IconButton(
-                icon: Icon(isNavigationRailExtended ? Icons.menu_open : Icons.menu),
-                onPressed: () {
-                  setState(() {
-                    isNavigationRailExtended = !isNavigationRailExtended;
-                  });
-                },
+              leading: Align(
+                alignment: isNavigationRailExtended
+                    ? Alignment.centerLeft
+                    : Alignment.center,
+                child: IconButton(
+                  icon: Icon(
+                    isNavigationRailExtended ? Icons.menu_open : Icons.menu,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isNavigationRailExtended = !isNavigationRailExtended;
+                    });
+                  },
+                ),
               ),
               destinations: [
                 NavigationRailDestination(
@@ -57,21 +72,23 @@ class _MyHomePageState extends State<MyHomePage> {
                   label: Text('Favorites'),
                 ),
                 NavigationRailDestination(
+                  icon: Icon(Icons.design_services),
+                  label: Text('Logo Gen'),
+                ),
+                NavigationRailDestination(
                   icon: Icon(Icons.settings),
                   label: Text('Settings'),
                 ),
               ],
               selectedIndex: selectedIndex,
               onDestinationSelected: (value) {
-                setState(() {
-                  selectedIndex = value;
-                });
+                appState.setSelectedIndex(value);
               },
             ),
           ),
           Expanded(
             child: Container(
-              color: Theme.of(context).colorScheme.primaryContainer,
+              color: Theme.of(context).colorScheme.surface,
               child: page,
             ),
           ),
