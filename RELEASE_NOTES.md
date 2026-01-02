@@ -1,3 +1,21 @@
+# Release Notes - v1.1.1
+
+## 🚀 New Features (新功能)
+
+*   **Logo Generator (Logo 生成器)**:
+    *   Added a new **Logo Generator** page (PH Logo style).
+    *   Supports **Custom Colors** (Primary & Secondary) for personalized logo creation.
+    *   Real-time **Preview** and **Loading State** for better user experience.
+*   **Style Customization (样式自定义)**:
+    *   Added **Style Selector** in Favorite Details page.
+    *   Enhanced `BigCard` to support dynamic style updates.
+
+## 🛠 Technical Details (技术细节)
+
+*   **Build Automation**: Added `build_dmg.sh` script to automate macOS DMG packaging.
+*   **Assets**: Updated UI screenshots in documentation.
+*   **Documentation**: Added disclaimer to README.
+
 # Release Notes - v1.1.0
 
 ## 🚀 New Features (新功能)
