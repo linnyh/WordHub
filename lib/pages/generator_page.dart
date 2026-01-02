@@ -430,33 +430,6 @@ class _GeneratorPageState extends State<GeneratorPage> with SingleTickerProvider
                   ),
                 ),
                 SizedBox(height: 16),
-                // Preview / Logo Gen
-                ClipOval(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.4),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
-                      ),
-                      child: InkWell(
-                        onTap: () {
-                          appState.setLogoParts(pair.first, pair.second);
-                          appState.setSelectedIndex(3);
-                        },
-                        child: Icon(
-                          Icons.design_services,
-                          size: 28,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
                 // Next
                 ClipOval(
                   child: BackdropFilter(

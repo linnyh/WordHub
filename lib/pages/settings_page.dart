@@ -1,4 +1,3 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -109,64 +108,6 @@ class _SettingsPageState extends State<SettingsPage> {
               'This key will be used to generate AI definitions.',
               style: TextStyle(color: Colors.grey, fontSize: 12),
             ),
-            SizedBox(height: 40),
-            Text(
-              'SVG Export Path',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[900],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[800]!),
-                    ),
-                    child: Text(
-                      appState.svgSavePath ?? 'Default (Documents)',
-                      style: TextStyle(
-                        color: appState.svgSavePath != null ? Colors.white : Colors.grey,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () async {
-                    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-                    if (selectedDirectory != null) {
-                      appState.setSvgSavePath(selectedDirectory);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('SVG save path updated')),
-                      );
-                    }
-                  },
-                  child: Text('Select', style: TextStyle(color: Colors.black)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF9900),
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 10),
-            if (appState.svgSavePath != null)
-              TextButton(
-                onPressed: () {
-                  appState.setSvgSavePath(null);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Reset to default path')),
-                  );
-                },
-                child: Text('Reset to Default', style: TextStyle(color: Colors.red)),
-              ),
             SizedBox(height: 40),
             Text(
               'Data Management',

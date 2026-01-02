@@ -31,10 +31,10 @@ class _MyHomePageState extends State<MyHomePage> {
         page = FavoritesPage();
         break;
       case 2:
-        page = SettingsPage();
+        page = PhLogoPage();
         break;
       case 3:
-        page = PhLogoPage();
+        page = SettingsPage();
         break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -72,12 +72,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   label: Text('Favorites'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.settings),
-                  label: Text('Settings'),
-                ),
-                NavigationRailDestination(
                   icon: Icon(Icons.design_services),
                   label: Text('Logo Gen'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.settings),
+                  label: Text('Settings'),
                 ),
               ],
               selectedIndex: selectedIndex,

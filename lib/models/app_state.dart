@@ -278,7 +278,10 @@ Example:
   Future<void> _saveConfig() async {
     try {
       final file = await _configFile;
-      await file.writeAsString(jsonEncode({'apiKey': apiKey}));
+      await file.writeAsString(jsonEncode({
+        'apiKey': apiKey,
+        'svgSavePath': svgSavePath,
+      }));
     } catch (e) {
       debugPrint('Error saving config: $e');
     }

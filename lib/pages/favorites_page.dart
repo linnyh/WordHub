@@ -328,6 +328,7 @@ class _FavoriteDetailDialogState extends State<FavoriteDetailDialog> {
 
   @override
   Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
     var pair = widget.favorites[currentIndex];
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
@@ -370,6 +371,52 @@ class _FavoriteDetailDialogState extends State<FavoriteDetailDialog> {
                   child: BigCard(
                     key: ValueKey(pair),
                     pair: pair,
+                    style: appState.currentStyle,
+                  ),
+                ),
+                SizedBox(height: 20),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: MyAppState.styleIcons.entries.map((entry) {
+                      final style = entry.key;
+                      final icon = entry.value;
+                      final isSelected = appState.currentStyle == style;
+                      
+                      return GestureDetector(
+                        onTap: () => appState.setStyle(style),
+                        child: Container(
+                          margin: EdgeInsets.symmetric(horizontal: 6),
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFFFF9900) : Colors.grey[900],
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected ? const Color(0xFFFF9900) : Colors.grey[800]!,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                icon, 
+                                size: 16, 
+                                color: isSelected ? Colors.black : Colors.grey[400]
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                style,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.black : Colors.grey[400],
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
                 SizedBox(height: 30),
