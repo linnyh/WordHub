@@ -17,6 +17,7 @@ The application features a unique and bold UI design inspired by the Pornhub aes
   <img src="screenshots/home.png" alt="Home Screen" width="300" />
   <img src="screenshots/favorites.png" alt="Favorites Screen" width="300" />
   <img src="screenshots/detail.png" alt="Detail Dialog" width="300" />
+  <img src="screenshots/icon_generate.png" alt="Icon Generator" width="300" />
   <img src="screenshots/setting.png" alt="Settings Screen" width="300" />
 </div>
 
