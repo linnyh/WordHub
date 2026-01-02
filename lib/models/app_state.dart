@@ -16,6 +16,26 @@ class MyAppState extends ChangeNotifier {
   var favoritePairs = <WordPair>[];
   var apiKey = '';
   
+  // Style configurations
+  String currentStyle = 'General';
+  static const Map<String, String> stylePrompts = {
+    'General': 'A balanced, creative brand profile suitable for a general audience.',
+    'Tech': 'Futuristic, innovative, high-tech, software, startup vibe, cyberpunk, AI-driven.',
+    'Magic': 'Mystical, fantasy, ancient, ethereal, arcane, potions, spells, wizardry.',
+    'Fashion': 'Luxury, trendy, bold, elegant, streetwear, artistic, haute couture.',
+    'Organic': 'Natural, eco-friendly, sustainable, fresh, earthy, holistic, pure.',
+    'Gaming': 'Energetic, competitive, esports, arcade, pixel, fun, immersive.',
+  };
+
+  static const Map<String, IconData> styleIcons = {
+    'General': Icons.auto_awesome,
+    'Tech': Icons.memory,
+    'Magic': Icons.auto_fix_high,
+    'Fashion': Icons.checkroom,
+    'Organic': Icons.eco,
+    'Gaming': Icons.sports_esports,
+  };
+
   Map<String, dynamic> currentInfo = {};
   bool isLoading = false;
   final FlutterTts flutterTts = FlutterTts();
@@ -46,9 +66,10 @@ class MyAppState extends ChangeNotifier {
     currentInfo = {};
     notifyListeners();
 
-    final cached = getCachedData(pair);
-    if (cached != null) {
-      currentInfo = cached;
+    // Check cache (key now includes style to avoid mixing contexts)
+    final cacheKey = "${pair.asPascalCase}_$currentStyle";
+    if (_wordCache.containsKey(cacheKey)) {
+      currentInfo = _wordCache[cacheKey]!;
       isLoading = false;
       notifyListeners();
       return;
@@ -57,8 +78,11 @@ class MyAppState extends ChangeNotifier {
     final service = MoonshotService(apiKey: apiKey);
 
     try {
+      final styleInstruction = stylePrompts[currentStyle] ?? stylePrompts['General']!;
       final prompt = '''
 Generate a creative profile for the fictional brand name "${pair.asPascalCase}" (composed of "${pair.first}" and "${pair.second}").
+Context/Theme: $styleInstruction
+
 Return ONLY a valid JSON object with these keys:
 - "part_of_speech": The most suitable part of speech (e.g., Noun, Verb, Adjective).
 - "definition_en": A creative English definition (max 20 words).
@@ -94,7 +118,10 @@ Example:
       final cleanJson = jsonMatch.group(0)!;
       final data = jsonDecode(cleanJson);
       
-      cacheData(pair, data);
+      // Cache with style included in key
+      _wordCache[cacheKey] = data;
+      _saveCache();
+
       currentInfo = data;
       isLoading = false;
       notifyListeners();
@@ -177,12 +204,36 @@ Example:
     }
   }
 
-  Map<String, dynamic>? getCachedData(WordPair pair) {
-    return _wordCache[pair.asPascalCase];
+  Map<String, dynamic>? getCachedData(WordPair pair, {bool strict = false}) {
+    // 1. Exact match with current style
+    final currentKey = "${pair.asPascalCase}_$currentStyle";
+    if (_wordCache.containsKey(currentKey)) {
+      return _wordCache[currentKey];
+    }
+    
+    // 2. Backward compatibility (no suffix)
+    if (_wordCache.containsKey(pair.asPascalCase)) {
+      // If strict is true, only accept legacy data if we are in General style
+      if (!strict || currentStyle == 'General') {
+        return _wordCache[pair.asPascalCase];
+      }
+    }
+
+    if (strict) return null;
+
+    // 3. Any other style match (fallback)
+    final prefix = "${pair.asPascalCase}_";
+    for (var key in _wordCache.keys) {
+      if (key.startsWith(prefix)) {
+        return _wordCache[key];
+      }
+    }
+
+    return null;
   }
 
   void cacheData(WordPair pair, Map<String, dynamic> data) {
-    _wordCache[pair.asPascalCase] = data;
+    _wordCache["${pair.asPascalCase}_$currentStyle"] = data;
     _saveCache();
   }
 
@@ -246,6 +297,14 @@ Example:
     apiKey = key;
     _saveConfig();
     notifyListeners();
+  }
+
+  void setStyle(String style) {
+    if (stylePrompts.containsKey(style) && currentStyle != style) {
+      currentStyle = style;
+      fetchInfo(current); // Re-fetch for the current word with new style
+      notifyListeners();
+    }
   }
 
   void setCurrent(WordPair pair) {

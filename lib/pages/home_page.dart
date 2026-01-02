@@ -39,13 +39,20 @@ class _MyHomePageState extends State<MyHomePage> {
             child: NavigationRail(
               extended: isNavigationRailExtended,
               minWidth: 72,
-              leading: IconButton(
-                icon: Icon(isNavigationRailExtended ? Icons.menu_open : Icons.menu),
-                onPressed: () {
-                  setState(() {
-                    isNavigationRailExtended = !isNavigationRailExtended;
-                  });
-                },
+              leading: Align(
+                alignment: isNavigationRailExtended
+                    ? Alignment.centerLeft
+                    : Alignment.center,
+                child: IconButton(
+                  icon: Icon(
+                    isNavigationRailExtended ? Icons.menu_open : Icons.menu,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isNavigationRailExtended = !isNavigationRailExtended;
+                    });
+                  },
+                ),
               ),
               destinations: [
                 NavigationRailDestination(
@@ -71,7 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           Expanded(
             child: Container(
-              color: Theme.of(context).colorScheme.primaryContainer,
+              color: Theme.of(context).colorScheme.surface,
               child: page,
             ),
           ),
