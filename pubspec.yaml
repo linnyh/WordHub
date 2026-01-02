@@ -17,6 +17,7 @@ dependencies:
   path_provider: ^2.1.5
   http: ^1.6.0
   flutter_tts: ^4.2.3
+  file_picker: ^10.3.8
 
 dev_dependencies:
   flutter_test:

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../models/app_state.dart';
 import 'favorites_page.dart';
 import 'generator_page.dart';
 import 'settings_page.dart';
+import 'ph_logo_page.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -12,11 +15,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var selectedIndex = 0;
   var isNavigationRailExtended = false;
 
   @override
   Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+    var selectedIndex = appState.selectedIndex;
+    
     Widget page;
     switch (selectedIndex) {
       case 0:
@@ -27,6 +32,9 @@ class _MyHomePageState extends State<MyHomePage> {
         break;
       case 2:
         page = SettingsPage();
+        break;
+      case 3:
+        page = PhLogoPage();
         break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -67,12 +75,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   icon: Icon(Icons.settings),
                   label: Text('Settings'),
                 ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.design_services),
+                  label: Text('Logo Gen'),
+                ),
               ],
               selectedIndex: selectedIndex,
               onDestinationSelected: (value) {
-                setState(() {
-                  selectedIndex = value;
-                });
+                appState.setSelectedIndex(value);
               },
             ),
           ),

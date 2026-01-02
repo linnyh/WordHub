@@ -24,7 +24,6 @@ class BigCard extends StatefulWidget {
 class _BigCardState extends State<BigCard> {
   Map<String, dynamic> currentInfo = {};
   bool _loading = true;
-  bool _isFetching = false;
   final FlutterTts flutterTts = FlutterTts();
   bool _isSpeaking = false;
 
@@ -83,44 +82,29 @@ class _BigCardState extends State<BigCard> {
   }
 
   Future<void> _fetchInfo() async {
+    setState(() {
+      _loading = true;
+      currentInfo = {};
+    });
+    
     final appState = Provider.of<MyAppState>(context, listen: false);
     
-    // 1. Try to find EXACT match for current style
-    final strictData = appState.getCachedData(widget.pair, strict: true);
-    if (strictData != null) {
+    final cachedData = appState.getCachedData(widget.pair);
+    if (cachedData != null) {
       if (mounted) {
         setState(() {
-          currentInfo = strictData;
+          currentInfo = cachedData;
           _loading = false;
         });
       }
       return;
     }
 
-    // 2. If no exact match, try fallback to show SOMETHING while fetching
-    final fallbackData = appState.getCachedData(widget.pair, strict: false);
-    if (mounted) {
-      setState(() {
-        if (fallbackData != null) {
-          currentInfo = fallbackData;
-          _loading = false; // Show fallback content
-        } else {
-          currentInfo = {};
-          _loading = true; // Show loading spinner
-        }
-        _isFetching = true; // Start showing rhythmic animation
-      });
-    }
-
-    // 3. Fetch from API for the current style
     final service = MoonshotService(apiKey: appState.apiKey);
 
     try {
-      final styleInstruction = MyAppState.stylePrompts[appState.currentStyle] ?? MyAppState.stylePrompts['General']!;
       final prompt = '''
 Generate a creative profile for the fictional brand name "${widget.pair.asPascalCase}" (composed of "${widget.pair.first}" and "${widget.pair.second}").
-Context/Theme: $styleInstruction
-
 Return ONLY a valid JSON object with these keys:
 - "part_of_speech": The most suitable part of speech (e.g., Noun, Verb, Adjective).
 - "definition_en": A creative English definition (max 20 words).
@@ -162,7 +146,6 @@ Example:
         setState(() {
           currentInfo = data;
           _loading = false;
-          _isFetching = false;
         });
       }
     } catch (e) {
@@ -170,29 +153,15 @@ Example:
       if (mounted) {
         setState(() {
           _loading = false;
-          _isFetching = false;
-          // If we failed and had no fallback, we might show empty. 
-          // If we had fallback, we keep showing it.
         });
       }
     }
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Re-fetch when dependencies (AppState) change
-    _fetchInfo();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pair = widget.pair;
-    
-    // Ensure we are watching AppState so didChangeDependencies triggers on change
-    context.watch<MyAppState>();
-    
     String partOfSpeech = currentInfo['part_of_speech'] ?? "...";
     
     double cardWidth = MediaQuery.of(context).size.width * 0.8;
@@ -288,15 +257,6 @@ Example:
             ),
           ),
           
-          if (_isFetching)
-            LinearProgressIndicator(
-              minHeight: 2,
-              backgroundColor: Colors.transparent,
-              valueColor: AlwaysStoppedAnimation(const Color(0xFFFF9900)),
-            )
-          else
-            SizedBox(height: 2),
-
           // Body (Info)
           Container(
             padding: EdgeInsets.all(20),

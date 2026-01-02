@@ -328,9 +328,7 @@ class _FavoriteDetailDialogState extends State<FavoriteDetailDialog> {
 
   @override
   Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>(); // Watch for style changes
     var pair = widget.favorites[currentIndex];
-    
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
       child: Center(
@@ -374,62 +372,7 @@ class _FavoriteDetailDialogState extends State<FavoriteDetailDialog> {
                     pair: pair,
                   ),
                 ),
-                SizedBox(height: 20),
-                // Horizontal Style Selector
-                Container(
-                  height: 60,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    shrinkWrap: true,
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    children: MyAppState.styleIcons.entries.map((entry) {
-                      final style = entry.key;
-                      final icon = entry.value;
-                      final isSelected = appState.currentStyle == style;
-                      
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: InkWell(
-                          onTap: () => appState.setStyle(style),
-                          borderRadius: BorderRadius.circular(30),
-                          child: AnimatedContainer(
-                            duration: Duration(milliseconds: 200),
-                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFFFF9900) : Colors.grey[900],
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: isSelected ? const Color(0xFFFF9900) : Colors.grey[800]!,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  icon, 
-                                  size: 18, 
-                                  color: isSelected ? Colors.black : Colors.grey[400]
-                                ),
-                                if (isSelected) ...[
-                                  SizedBox(width: 8),
-                                  Text(
-                                    style,
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ]
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                SizedBox(height: 20),
+                SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

@@ -15,6 +15,25 @@ class MyAppState extends ChangeNotifier {
   static const maxHistoryLength = 8;
   var favoritePairs = <WordPair>[];
   var apiKey = '';
+  String? svgSavePath;
+  
+  // Navigation State
+  int selectedIndex = 0;
+
+  void setSelectedIndex(int index) {
+    selectedIndex = index;
+    notifyListeners();
+  }
+
+  // Logo Generation State
+  String? logoPrefix;
+  String? logoSuffix;
+
+  void setLogoParts(String prefix, String suffix) {
+    logoPrefix = prefix;
+    logoSuffix = suffix;
+    notifyListeners();
+  }
   
   // Style configurations
   String currentStyle = 'General';
@@ -204,7 +223,7 @@ Example:
     }
   }
 
-  Map<String, dynamic>? getCachedData(WordPair pair, {bool strict = false}) {
+  Map<String, dynamic>? getCachedData(WordPair pair) {
     // 1. Exact match with current style
     final currentKey = "${pair.asPascalCase}_$currentStyle";
     if (_wordCache.containsKey(currentKey)) {
@@ -213,13 +232,8 @@ Example:
     
     // 2. Backward compatibility (no suffix)
     if (_wordCache.containsKey(pair.asPascalCase)) {
-      // If strict is true, only accept legacy data if we are in General style
-      if (!strict || currentStyle == 'General') {
-        return _wordCache[pair.asPascalCase];
-      }
+      return _wordCache[pair.asPascalCase];
     }
-
-    if (strict) return null;
 
     // 3. Any other style match (fallback)
     final prefix = "${pair.asPascalCase}_";
@@ -250,8 +264,11 @@ Example:
         final json = jsonDecode(contents);
         if (json['apiKey'] != null) {
           apiKey = json['apiKey'];
-          notifyListeners();
         }
+        if (json['svgSavePath'] != null) {
+          svgSavePath = json['svgSavePath'];
+        }
+        notifyListeners();
       }
     } catch (e) {
       debugPrint('Error loading config: $e');
@@ -295,6 +312,12 @@ Example:
 
   void setApiKey(String key) {
     apiKey = key;
+    _saveConfig();
+    notifyListeners();
+  }
+
+  void setSvgSavePath(String? path) {
+    svgSavePath = path;
     _saveConfig();
     notifyListeners();
   }
