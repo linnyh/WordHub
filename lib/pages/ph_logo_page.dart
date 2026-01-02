@@ -17,13 +17,22 @@ class _PhLogoPageState extends State<PhLogoPage> {
   TextEditingController? _widthController;
   TextEditingController? _heightController;
   TextEditingController? _borderRadiusController;
+  TextEditingController? _cardColorController;
+  TextEditingController? _canvasColorController;
+  
   bool _enableCustomBackground = false;
+  Color _cardColor = Colors.black;
+  Color _canvasColor = Colors.black;
+  
+  bool _isGenerating = false;
   String _statusMessage = '';
   String? _lastSavedPath; // Store the path of the last saved file
 
   TextEditingController get widthController => _widthController ??= TextEditingController(text: '1024');
   TextEditingController get heightController => _heightController ??= TextEditingController(text: '1024');
   TextEditingController get borderRadiusController => _borderRadiusController ??= TextEditingController(text: '0');
+  TextEditingController get cardColorController => _cardColorController ??= TextEditingController(text: '#000000');
+  TextEditingController get canvasColorController => _canvasColorController ??= TextEditingController(text: '#000000');
 
   @override
   void initState() {
@@ -40,7 +49,49 @@ class _PhLogoPageState extends State<PhLogoPage> {
     _widthController?.dispose();
     _heightController?.dispose();
     _borderRadiusController?.dispose();
+    _cardColorController?.dispose();
+    _canvasColorController?.dispose();
     super.dispose();
+  }
+
+  Color _parseColor(String text) {
+    text = text.trim().replaceAll('#', '');
+    if (text.toLowerCase() == 'transparent') return Colors.transparent;
+    if (text.length == 6) {
+      return Color(int.parse('0xFF$text'));
+    } else if (text.length == 8) {
+      return Color(int.parse('0x$text'));
+    }
+    return Colors.black;
+  }
+
+  String _colorToHex(Color color) {
+    if (color == Colors.transparent) return 'Transparent';
+    return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+  }
+
+  void _updateCardColor(String value) {
+    setState(() {
+      if (value.toLowerCase() == 'transparent') {
+        _cardColor = Colors.transparent;
+      } else {
+        try {
+          _cardColor = _parseColor(value);
+        } catch (_) {}
+      }
+    });
+  }
+
+  void _updateCanvasColor(String value) {
+    setState(() {
+      if (value.toLowerCase() == 'transparent') {
+        _canvasColor = Colors.transparent;
+      } else {
+        try {
+          _canvasColor = _parseColor(value);
+        } catch (_) {}
+      }
+    });
   }
 
   void _generateSvg() async {
@@ -53,6 +104,14 @@ class _PhLogoPageState extends State<PhLogoPage> {
       });
       return;
     }
+
+    setState(() {
+      _isGenerating = true;
+      _statusMessage = '';
+    });
+
+    // Artificial delay to show animation
+    await Future.delayed(Duration(milliseconds: 800));
 
     try {
       // Basic font metrics estimation
@@ -123,6 +182,9 @@ class _PhLogoPageState extends State<PhLogoPage> {
       final double borderRadius = _enableCustomBackground 
           ? (double.tryParse(borderRadiusController.text) ?? 0) 
           : 0;
+      
+      final String cardFill = _cardColor == Colors.transparent ? 'none' : '#${_cardColor.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+      final String canvasFill = _canvasColor == Colors.transparent ? 'none' : '#${_canvasColor.value.toRadixString(16).padLeft(8, '0').substring(2)}';
 
       final svgContent = '''
 <svg width="$totalWidth" height="$totalHeight" viewBox="0 0 $totalWidth $totalHeight" xmlns="http://www.w3.org/2000/svg">
@@ -143,11 +205,11 @@ class _PhLogoPageState extends State<PhLogoPage> {
     .text { font-family: Arial, sans-serif; font-weight: bold; font-size: ${fontSize}px; }
   </style>
 
-  ${_enableCustomBackground ? '<rect width="100%" height="100%" fill="black" rx="$borderRadius" ry="$borderRadius" />' : ''}
+  ${_enableCustomBackground ? '<rect width="100%" height="100%" fill="$canvasFill" rx="$borderRadius" ry="$borderRadius" />' : ''}
   
   <g transform="translate($cardX, $cardY)">
     <!-- Card Background with Glow and Border -->
-    <rect width="$cardWidth" height="$cardHeight" fill="black" rx="$outerBorderRadius" ry="$outerBorderRadius" 
+    <rect width="$cardWidth" height="$cardHeight" fill="$cardFill" rx="$outerBorderRadius" ry="$outerBorderRadius" 
           filter="url(#glow)" stroke="#FF9900" stroke-opacity="0.5" stroke-width="2" />
     
     <!-- Prefix -->
@@ -184,12 +246,15 @@ class _PhLogoPageState extends State<PhLogoPage> {
       setState(() {
         _statusMessage = 'SVG Successfully Saved!';
         _lastSavedPath = file.path;
+        _isGenerating = false;
       });
       
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _statusMessage = 'Error: $e';
         _lastSavedPath = null;
+        _isGenerating = false;
       });
     }
   }
@@ -227,7 +292,7 @@ class _PhLogoPageState extends State<PhLogoPage> {
           child: Container(
             color: Colors.grey[900], // Slightly different background for preview area
             child: Center(
-              child: SingleChildScrollView( // Allow scrolling only if preview is massive
+              child: Padding(
                 padding: EdgeInsets.all(40),
                 child: _buildPreviewCard(theme),
               ),
@@ -341,50 +406,87 @@ class _PhLogoPageState extends State<PhLogoPage> {
   }
 
   Widget _buildPreviewCard(ThemeData theme) {
-    final style = theme.textTheme.displayMedium!.copyWith(
-      fontWeight: FontWeight.bold,
-      letterSpacing: -1.5,
-    );
+    // Basic font metrics estimation - same as in _generateSvg
+    const double fontSize = 100;
     
+    Widget logoCard = _buildLogoCard(theme, fontSize);
+
+    if (_enableCustomBackground) {
+      final double width = double.tryParse(widthController.text) ?? 1024;
+      final double height = double.tryParse(heightController.text) ?? 1024;
+      final double borderRadius = double.tryParse(borderRadiusController.text) ?? 0;
+
+      return FittedBox(
+        fit: BoxFit.contain,
+        child: Container(
+          width: width,
+          height: height,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: _canvasColor,
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: Colors.grey[800]!, width: 1),
+          ),
+          child: logoCard,
+        ),
+      );
+    }
+
+    return FittedBox(
+      fit: BoxFit.contain,
+      child: logoCard,
+    );
+  }
+
+  Widget _buildLogoCard(ThemeData theme, double fontSize) {
+    const double elementSpacing = 15;
+    const double outerPadding = 30;
+    const double innerBorderRadius = 10;
+    const double outerBorderRadius = 20;
+    
+    final textStyle = TextStyle(
+      fontFamily: 'Arial',
+      fontWeight: FontWeight.bold,
+      fontSize: fontSize,
+    );
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+      padding: EdgeInsets.all(outerPadding),
       decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(20),
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(outerBorderRadius),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.5),
+          color: const Color(0xFFFF9900).withOpacity(0.5),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.2),
+            color: const Color(0xFFFF9900).withOpacity(0.2),
             blurRadius: 30,
             spreadRadius: 5,
           ),
         ],
       ),
-      child: FittedBox(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _prefixController.text,
-              style: style.copyWith(color: Colors.white),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _prefixController.text,
+            style: textStyle.copyWith(color: Colors.white),
+          ),
+          SizedBox(width: elementSpacing),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF9900),
+              borderRadius: BorderRadius.circular(innerBorderRadius),
             ),
-            SizedBox(width: 15),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                _suffixController.text,
-                style: style.copyWith(color: Colors.black),
-              ),
+            child: Text(
+              _suffixController.text,
+              style: textStyle.copyWith(color: Colors.black),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -412,6 +514,11 @@ class _PhLogoPageState extends State<PhLogoPage> {
           ],
         ),
         SizedBox(height: 20),
+        
+        // Card Color Picker
+        _buildColorPickerRow(theme, 'Card Color', cardColorController, _updateCardColor, _cardColor),
+        SizedBox(height: 20),
+
         Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -423,7 +530,7 @@ class _PhLogoPageState extends State<PhLogoPage> {
             children: [
               SwitchListTile(
                 title: Text('Custom Background Size', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: Text('Define custom width and height for the background', style: TextStyle(color: Colors.grey[400])),
+                subtitle: Text('Define custom width, height and color for the background', style: TextStyle(color: Colors.grey[400])),
                 value: _enableCustomBackground,
                 activeColor: theme.colorScheme.primary,
                 onChanged: (value) {
@@ -439,6 +546,7 @@ class _PhLogoPageState extends State<PhLogoPage> {
                     Expanded(
                       child: TextField(
                         controller: widthController,
+                        onChanged: (value) => setState(() {}),
                         style: TextStyle(color: Colors.white),
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
@@ -459,6 +567,7 @@ class _PhLogoPageState extends State<PhLogoPage> {
                     Expanded(
                       child: TextField(
                         controller: heightController,
+                        onChanged: (value) => setState(() {}),
                         style: TextStyle(color: Colors.white),
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
@@ -480,6 +589,7 @@ class _PhLogoPageState extends State<PhLogoPage> {
                 SizedBox(height: 16),
                 TextField(
                   controller: borderRadiusController,
+                  onChanged: (value) => setState(() {}),
                   style: TextStyle(color: Colors.white),
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
@@ -495,9 +605,92 @@ class _PhLogoPageState extends State<PhLogoPage> {
                     ),
                   ),
                 ),
+                SizedBox(height: 16),
+                _buildColorPickerRow(theme, 'Canvas Color', canvasColorController, _updateCanvasColor, _canvasColor),
               ],
             ],
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildColorPickerRow(ThemeData theme, String label, TextEditingController controller, Function(String) onChanged, Color currentColor) {
+    final List<Color> presets = [
+      Colors.black,
+      Colors.white,
+      Colors.grey,
+      Color(0xFFFF9900), // PH Orange
+      Colors.transparent,
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: '#000000 or Transparent',
+                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  filled: true,
+                  fillColor: Colors.black,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[800]!),
+                  ),
+                  suffixIcon: Container(
+                    margin: EdgeInsets.all(8),
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: currentColor == Colors.transparent ? null : currentColor,
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: currentColor == Colors.transparent 
+                      ? Icon(Icons.block, size: 16, color: Colors.red) 
+                      : null,
+                  ),
+                ),
+                onChanged: onChanged,
+              ),
+            ),
+            SizedBox(width: 12),
+            ...presets.map((color) {
+              final isSelected = currentColor == color;
+              return GestureDetector(
+                onTap: () {
+                  final hex = _colorToHex(color);
+                  controller.text = hex;
+                  onChanged(hex);
+                },
+                child: Container(
+                  margin: EdgeInsets.only(left: 8),
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: color == Colors.transparent ? Colors.transparent : color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? theme.colorScheme.primary : Colors.grey[700]!,
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: color == Colors.transparent 
+                      ? Icon(Icons.block, size: 16, color: Colors.red) 
+                      : null,
+                ),
+              );
+            }).toList(),
+          ],
         ),
       ],
     );
@@ -508,21 +701,33 @@ class _PhLogoPageState extends State<PhLogoPage> {
       width: double.infinity,
       height: 56,
       child: ElevatedButton.icon(
-        onPressed: _generateSvg,
+        onPressed: _isGenerating ? null : _generateSvg,
         style: ElevatedButton.styleFrom(
           elevation: 8,
           shadowColor: theme.colorScheme.primary.withOpacity(0.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
+          disabledBackgroundColor: theme.colorScheme.primary.withOpacity(0.3),
         ),
-        icon: Icon(Icons.download_rounded, size: 28),
+        icon: _isGenerating 
+            ? Container(
+                width: 24, 
+                height: 24, 
+                padding: EdgeInsets.all(2),
+                child: CircularProgressIndicator(
+                  color: Colors.white, 
+                  strokeWidth: 3,
+                ),
+              )
+            : Icon(Icons.download_rounded, size: 28),
         label: Text(
-          'GENERATE SVG', 
+          _isGenerating ? 'GENERATING...' : 'GENERATE SVG', 
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.0,
+            color: _isGenerating ? Colors.white.withOpacity(0.8) : null,
           ),
         ),
       ),
